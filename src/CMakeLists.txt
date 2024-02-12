@@ -26,7 +26,7 @@ if(count GREATER 1)
   message(FATAL_ERROR "You must choose only one connector")
 endif()
 
-target_link_libraries(mafsrv PRIVATE libpistache)
+target_link_libraries(mafsrv PRIVATE ${libpistache_BINARY_DIR}/src/libpistache.a)
 
 target_sources(mafsrv
   PRIVATE
