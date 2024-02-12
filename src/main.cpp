@@ -5,16 +5,15 @@
 
 int main() {
     mafsrv::PublicUsers users;
-    auto config = std::make_unique<sqlpp::postgresql::connection_config>();
+    auto config = std::make_shared<sqlpp::postgresql::connection_config>();
     config->host = "localhost";
     config->user = "postgres";
     config->password = "";
-    config->dbname = "users";
-    config->debug = true;
+    config->dbname = "postgres";
     sqlpp::postgresql::connection db(config);
 
     // selecting zero or more results, iterating over the results
-    for (const auto& row : db(select(users.uid, users.name))) {
+    for (const auto& row : db(select(users.uid, users.name).from(users).unconditionally())) {
         std::string name = row.name;
         int uid = row.uid;
         std::cout << "uid: " << uid << " name: " << name << std::endl;
