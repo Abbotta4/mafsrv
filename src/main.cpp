@@ -3,7 +3,7 @@
 #include <sqlpp11/select.h>
 #include <sqlpp11/insert.h>
 #include "users.h"
-#include <pistache/pistache.h>
+#include <pistache/endpoint.h>
 
 int main() {
     mafsrv::PublicUsers users;
