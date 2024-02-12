@@ -1,9 +1,24 @@
 #include <iostream>
+#include <sqlpp11/postgresql/connection.h>
 #include <sqlpp11/select.h>
-#include <sqlpp11/alias_provider.h>
+#include "users.h"
 
 int main() {
-    select(sqlpp::value(false).as(sqlpp::alias::a));
-    std::cout << "Hello, world!" << std::endl;
+    mafsrv::PublicUsers users;
+    auto config = std::make_unique<sqlpp::postgresql::connection_config>();
+    config->host = "localhost";
+    config->user = "postgres";
+    config->password = "";
+    config->dbname = "users";
+    config->debug = true;
+    sqlpp::postgresql::connection db(config);
+
+    // selecting zero or more results, iterating over the results
+    for (const auto& row : db(select(users.uid, users.name))) {
+        std::string name = row.name;
+        int uid = row.uid;
+        std::cout << "uid: " << uid << " name: " << name << std::endl;
+    }
+
     return 0;
 }
