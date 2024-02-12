@@ -1,7 +1,9 @@
 #include <iostream>
 #include <sqlpp11/postgresql/connection.h>
 #include <sqlpp11/select.h>
+#include <sqlpp11/insert.h>
 #include "users.h"
+#include <pistache/pistache.h>
 
 int main() {
     mafsrv::PublicUsers users;

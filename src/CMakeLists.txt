@@ -26,6 +26,8 @@ if(count GREATER 1)
   message(FATAL_ERROR "You must choose only one connector")
 endif()
 
+target_link_libraries(mafsrv PRIVATE libpistache)
+
 target_sources(mafsrv
   PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp

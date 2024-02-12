@@ -1,5 +1,6 @@
 # Preamble
 cmake_minimum_required(VERSION 3.11)
+cmake_policy(VERSION 3.11)
 project(mafsrv VERSION 0.5 LANGUAGES CXX)
 
 # Project wide setup
