@@ -5,6 +5,13 @@
 #include "users.h"
 #include <pistache/endpoint.h>
 
+struct HelloHandler : public Pistache::Http::Handler {
+    HTTP_PROTOTYPE(HelloHandler)
+    void onRequest(const Pistache::Http::Request&, Pistache::Http::ResponseWriter writer) override {
+        writer.send(Pistache::Http::Code::Ok, "Hello, World!");
+    }
+};
+
 int main() {
     mafsrv::PublicUsers users;
     auto config = std::make_shared<sqlpp::postgresql::connection_config>();
@@ -20,6 +27,9 @@ int main() {
         int uid = row.uid;
         std::cout << "uid: " << uid << " name: " << name << std::endl;
     }
+
+    Pistache::Http::listenAndServe<HelloHandler>(Pistache::Address("*:9080"));
+
 
     return 0;
 }
