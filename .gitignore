@@ -36,3 +36,6 @@ _deps
 .vscode/
 \#*\#
 *~
+
+# Other
+build/
