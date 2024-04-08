@@ -33,4 +33,8 @@ target_sources(mafsrv
   PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/users.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/pgdb.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/pgdb.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/restserver.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/restserver.h
 )

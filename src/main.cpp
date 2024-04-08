@@ -1,35 +1,28 @@
 #include <iostream>
-#include <sqlpp11/postgresql/connection.h>
-#include <sqlpp11/select.h>
-#include <sqlpp11/insert.h>
+#include "pgdb.h"
 #include "users.h"
-#include <pistache/endpoint.h>
+#include "restserver.h"
 
-struct HelloHandler : public Pistache::Http::Handler {
-    HTTP_PROTOTYPE(HelloHandler)
-    void onRequest(const Pistache::Http::Request&, Pistache::Http::ResponseWriter writer) override {
-        writer.send(Pistache::Http::Code::Ok, "Hello, World!");
-    }
-};
+int main(int argc, char* argv[]) {
+    Pistache::Port port(9080);
+    int thr = 2;
+    if (argc >= 2)
+    {
+        port = static_cast<uint16_t>(std::stol(argv[1]));
 
-int main() {
-    mafsrv::PublicUsers users;
-    auto config = std::make_shared<sqlpp::postgresql::connection_config>();
-    config->host = "localhost";
-    config->user = "postgres";
-    config->password = "";
-    config->dbname = "postgres";
-    sqlpp::postgresql::connection db(config);
-
-    // selecting zero or more results, iterating over the results
-    for (const auto& row : db(select(users.uid, users.name).from(users).unconditionally())) {
-        std::string name = row.name;
-        int uid = row.uid;
-        std::cout << "uid: " << uid << " name: " << name << std::endl;
+        if (argc == 3)
+            thr = std::stoi(argv[2]);
     }
 
-    Pistache::Http::listenAndServe<HelloHandler>(Pistache::Address("*:9080"));
+    Pistache::Address addr(Pistache::Ipv4::any(), port);
 
+    std::cout << "Cores = " << Pistache::hardware_concurrency() << std::endl;
+    std::cout << "Using " << thr << " threads" << std::endl;
+
+    RESTEndpoint rest(addr);
+
+    rest.init(thr);
+    rest.start();
 
     return 0;
 }
