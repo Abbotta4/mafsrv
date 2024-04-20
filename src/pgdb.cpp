@@ -22,7 +22,7 @@ std::string queryUsers(int uid) {
     auto db = getDB();
     auto res = db(select(all_of(users))
 		  .from(users)
-		  .where(users.uid == 1));
+		  .where(users.uid == uid));
     if (!res.empty()) {
 	rapidjson::Document d;
 	rapidjson::Value &obj = d.SetObject();
@@ -43,4 +43,31 @@ std::string queryUsers(int uid) {
     }
 
     return "";
+}
+
+int insertUsers(std::string body) {
+    rapidjson::Document dom;
+    dom.Parse(body.c_str());
+
+    std::string name, email;
+    rapidjson::Value::ConstMemberIterator it = dom.FindMember("name");
+    if (it != dom.MemberEnd())
+	name = it->value.GetString();
+    else
+	throw std::invalid_argument("malformed request");
+    it = dom.FindMember("email");
+    if (it != dom.MemberEnd())
+	email = it->value.GetString();
+    else
+	throw std::invalid_argument("malformed request");
+
+    mafsrv::PublicUsers users;
+    auto db = getDB();
+    auto res = db(insert_into(users)
+		  .set(users.name = name,
+		       users.gamesPlayed = 0,
+		       users.gamesWon = 0,
+		       users.joined = std::chrono::system_clock::now()));
+
+    return 0;
 }

@@ -4,3 +4,4 @@
 
 sqlpp::postgresql::connection getDB();
 std::string queryUsers(int uid);
+int insertUsers(std::string body);
