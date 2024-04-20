@@ -1,5 +1,6 @@
 #include <sqlpp11/postgresql/connection.h>
 #include <sqlpp11/select.h>
+#include <sqlpp11/remove.h>
 #include <sqlpp11/insert.h>
 #include <rapidjson/document.h>
 #include <rapidjson/stringbuffer.h>
@@ -17,7 +18,7 @@ sqlpp::postgresql::connection getDB() {
     return db;
 }
 
-std::string queryUsers(int uid) {
+std::string getFromUsers(int uid) {
     mafsrv::PublicUsers users;
     auto db = getDB();
     auto res = db(select(all_of(users))
@@ -43,6 +44,15 @@ std::string queryUsers(int uid) {
     }
 
     return "";
+}
+
+int deleteFromUsers(int uid) {
+    mafsrv::PublicUsers users;
+    auto db = getDB();
+    auto res = db(remove_from(users)
+		  .where(users.uid == uid));
+
+    return 0; // DELETE_OK
 }
 
 int insertUsers(std::string body) {
