@@ -2,6 +2,7 @@
 #include <sqlpp11/select.h>
 #include <sqlpp11/remove.h>
 #include <sqlpp11/insert.h>
+#include <sqlpp11/update.h>
 #include <rapidjson/document.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
@@ -18,7 +19,7 @@ sqlpp::postgresql::connection getDB() {
     return db;
 }
 
-std::string getFromUsers(int uid) {
+std::string selectFromUsers(int uid) {
     mafsrv::PublicUsers users;
     auto db = getDB();
     auto res = db(select(all_of(users))
@@ -55,7 +56,7 @@ int deleteFromUsers(int uid) {
     return 0; // DELETE_OK
 }
 
-int insertUsers(std::string body) {
+int insertIntoUsers(std::string body) {
     rapidjson::Document dom;
     dom.Parse(body.c_str());
 
@@ -78,6 +79,36 @@ int insertUsers(std::string body) {
 		       users.gamesPlayed = 0,
 		       users.gamesWon = 0,
 		       users.joined = std::chrono::system_clock::now()));
+
+    return 0;
+}
+
+int updateIntoUsers(int uid, std::string body) {
+    rapidjson::Document dom;
+    dom.Parse(body.c_str());
+
+    mafsrv::PublicUsers users;
+
+    auto db = getDB();
+    auto s = dynamic_update(db, users).dynamic_set().dynamic_where(users.uid == uid);
+
+    for (auto& m : dom.GetObject()) {
+	if (m.name == "uid") {
+	    continue;
+	} else if (m.name == "name") {
+	    s.assignments.add(users.name = m.value.GetString());
+	} else if (m.name == "joined") {
+	    s.assignments.add(users.joined = std::chrono::time_point<std::chrono::system_clock>(std::chrono::seconds(m.value.GetInt())));
+	} else if (m.name == "games played") {
+	    s.assignments.add(users.gamesPlayed = m.value.GetInt());
+	} else if (m.name == "games won") {
+	    s.assignments.add(users.gamesWon = m.value.GetInt());
+	} else {
+	    throw std::runtime_error("Invalid users key");
+	}
+    }
+
+    auto res = db(s);
 
     return 0;
 }

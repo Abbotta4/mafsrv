@@ -12,8 +12,9 @@ public:
     void start();
 private:
     void setupRoutes();
-    void getUser(Pistache::Rest::Request const& request, Pistache::Http::ResponseWriter response);
+    void readUser(Pistache::Rest::Request const& request, Pistache::Http::ResponseWriter response);
     void createUser(Pistache::Rest::Request const& request, Pistache::Http::ResponseWriter response);
+    void updateUser(Pistache::Rest::Request const& request, Pistache::Http::ResponseWriter response);
     void deleteUser(Pistache::Rest::Request const& request, Pistache::Http::ResponseWriter response);
     void getThread(Pistache::Rest::Request const& request, Pistache::Http::ResponseWriter response);
     void doAuth(Pistache::Rest::Request const& request, Pistache::Http::ResponseWriter response);

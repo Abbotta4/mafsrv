@@ -17,17 +17,18 @@ void RESTEndpoint::start() {
 
 void RESTEndpoint::setupRoutes() {
     Pistache::Rest::Routes::Post(router, "/users/create", Pistache::Rest::Routes::bind(&RESTEndpoint::createUser, this));
-    Pistache::Rest::Routes::Get(router, "/users/:uid", Pistache::Rest::Routes::bind(&RESTEndpoint::getUser, this));
+    Pistache::Rest::Routes::Get(router, "/users/:uid", Pistache::Rest::Routes::bind(&RESTEndpoint::readUser, this));
+    Pistache::Rest::Routes::Patch(router, "/users/:uid", Pistache::Rest::Routes::bind(&RESTEndpoint::updateUser, this));
     Pistache::Rest::Routes::Delete(router, "/users/:uid", Pistache::Rest::Routes::bind(&RESTEndpoint::deleteUser, this));
     Pistache::Rest::Routes::Get(router, "/threads/:tid", Pistache::Rest::Routes::bind(&RESTEndpoint::getThread, this));
     //Pistache::Rest::Routes::Get(router, "/ready", Pistache::Rest::Routes::bind(&Generic::handleReady));
     //Pistache::Rest::Routes::Get(router, "/auth", Pistache::Rest::Routes::bind(&StatsEndpoint::doAuth, this));
 }
 
-void RESTEndpoint::getUser(Pistache::Rest::Request const& request, Pistache::Http::ResponseWriter response) {
+void RESTEndpoint::readUser(Pistache::Rest::Request const& request, Pistache::Http::ResponseWriter response) {
     try {
 	auto uid = request.param(":uid").as<std::string>();
-	std::string user = getFromUsers(std::stoi(uid));
+	std::string user = selectFromUsers(std::stoi(uid));
 	if (user == "")
 	    throw std::runtime_error("User not found");
 	else
@@ -56,11 +57,26 @@ void RESTEndpoint::deleteUser(Pistache::Rest::Request const& request, Pistache::
 
 void RESTEndpoint::createUser(Pistache::Rest::Request const& request, Pistache::Http::ResponseWriter response) {
     try {
-	int code = insertUsers(request.body());
-	if (code == 0) //CREATE_OK)
-	    response.send(Pistache::Http::Code::Created, "nice" , MIME(Text, Plain));
+	int code = insertIntoUsers(request.body());
+	if (code == 0) // CREATE_OK
+	    response.send(Pistache::Http::Code::Created, "Created" , MIME(Text, Plain));
 	else // error code
 	    response.send(Pistache::Http::Code::Bad_Request, "Could not create user: " + std::to_string(code) , MIME(Text, Plain));
+    } catch (const std::runtime_error &bang) {
+	response.send(Pistache::Http::Code::Not_Found, bang.what(), MIME(Text, Plain));
+    } catch (...) {
+	response.send(Pistache::Http::Code::Internal_Server_Error, "Internal error", MIME(Text, Plain));
+    }
+}
+
+void RESTEndpoint::updateUser(Pistache::Rest::Request const& request, Pistache::Http::ResponseWriter response) {
+    try {
+	auto uid = request.param(":uid").as<int>();
+	int code = updateIntoUsers(uid, request.body());
+	if (code == 0) // UPDATE_OK
+	    response.send(Pistache::Http::Code::Ok, "Updated" , MIME(Text, Plain));
+	else // error code
+	    response.send(Pistache::Http::Code::Bad_Request, "Could not update user: " + std::to_string(code) , MIME(Text, Plain));
     } catch (const std::runtime_error &bang) {
 	response.send(Pistache::Http::Code::Not_Found, bang.what(), MIME(Text, Plain));
     } catch (...) {
