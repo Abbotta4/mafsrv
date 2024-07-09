@@ -10,5 +10,11 @@ FetchContent_Declare(libpistache
   GIT_TAG         origin/master
 )
 
+FetchContent_Declare(jwtpp
+  GIT_REPOSITORY  https://github.com/troian/jwtpp
+  GIT_TAG         v2.0.5
+)
+
 add_subdirectory(sqlpp11)
 add_subdirectory(pistache)
+add_subdirectory(jwtpp)
