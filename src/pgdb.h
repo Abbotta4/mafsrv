@@ -7,3 +7,4 @@ std::string selectFromUsers(int uid);
 int insertIntoUsers(std::string body);
 int updateIntoUsers(int uid, std::string body);
 int deleteFromUsers(int uid);
+int tryLogin(std::string body);

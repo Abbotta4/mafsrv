@@ -17,7 +17,8 @@ private:
     void updateUser(Pistache::Rest::Request const& request, Pistache::Http::ResponseWriter response);
     void deleteUser(Pistache::Rest::Request const& request, Pistache::Http::ResponseWriter response);
     void getThread(Pistache::Rest::Request const& request, Pistache::Http::ResponseWriter response);
-    void doAuth(Pistache::Rest::Request const& request, Pistache::Http::ResponseWriter response);
+    void login(Pistache::Rest::Request const& request, Pistache::Http::ResponseWriter response);
+    //void doAuth(Pistache::Rest::Request const& request, Pistache::Http::ResponseWriter response);
 
     //using Lock  = std::mutex;
     //using Guard = std::lock_guard<Lock>;
