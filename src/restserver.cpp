@@ -2,8 +2,8 @@
 #include <pistache/http.h>
 #include <pistache/router.h>
 #include <iostream>
-#include "restserver.h"
-#include "pgdb.h"
+#include <restserver.h>
+#include <pgdb.h>
 
 void RESTEndpoint::init(size_t thr) {
     auto opts = Pistache::Http::Endpoint::options().threads(static_cast<int>(thr));

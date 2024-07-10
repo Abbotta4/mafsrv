@@ -6,8 +6,8 @@
 #include <rapidjson/document.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
-#include "users.h"
-#include "pgdb.h"
+#include <users.h>
+#include <pgdb.h>
 
 sqlpp::postgresql::connection getDB() {
     auto config = std::make_shared<sqlpp::postgresql::connection_config>();
