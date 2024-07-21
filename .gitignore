@@ -37,5 +37,6 @@ _deps
 \#*\#
 *~
 
-# Other
-build/
+# meson subprojects
+subprojects/*
+!subprojects/*.wrap

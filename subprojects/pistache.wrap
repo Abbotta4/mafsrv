@@ -1,0 +1,8 @@
+[wrap-git]
+directory = pistache-46ffbb8
+url = https://github.com/pistacheio/pistache.git
+revision = 46ffbb8228333b146c0ac2294439ba68623890b3
+depth = 1
+
+[provide]
+pistache = libpistache

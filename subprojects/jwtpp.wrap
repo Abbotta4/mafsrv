@@ -1,0 +1,9 @@
+[wrap-file]
+directory = jwtpp-2.0.5
+source_url = https://github.com/troian/jwtpp/archive/refs/tags/v2.0.5.tar.gz
+source_filename = jwtpp-2.0.5.tar.gz
+source_hash = 3f977c2eb9d8f69dd4eb77aacc117413af1e4ccf466567ad0d8eb00b9c9f5b54
+method = cmake
+
+[provide]
+jwtpp = jwtpp_static_dep
