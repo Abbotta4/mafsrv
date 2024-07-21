@@ -16,6 +16,9 @@ src = [
     ]
 dep = [
     dependency('libpistache', fallback: 'pistache', default_options: ['PISTACHE_USE_SSL=true']),
-    dependency('sqlpp11', fallback: 'sqlpp11', default_options: ['postgresql_connector=true'])
+    dependency('sqlpp11', fallback: 'sqlpp11', default_options: ['postgresql_connector=true']),
+    dependency('jwtpp', fallback: 'jwtpp'),
+    dependency('jsoncpp', fallback: 'jsoncpp'),
+    dependency('openssl', fallback: 'openssl')
     ]
 executable('mafsrv', sources: src, include_directories: inc, dependencies: dep)

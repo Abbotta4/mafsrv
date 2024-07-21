@@ -6,6 +6,7 @@
 #include <rapidjson/document.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
+#include <jwtpp/jwtpp.hh>
 #include <users.h>
 #include <pgdb.h>
 
@@ -31,7 +32,7 @@ std::string selectFromUsers(int uid) {
 
 	using gsr = rapidjson::GenericStringRef<char>;
 
-	std::string name = res.front().name;
+	std::string name = res.front().username;
 	obj.AddMember(gsr{"name"}, gsr{name.c_str()}, d.GetAllocator());
 	const auto joined = std::chrono::system_clock::time_point{res.front().joined.value()};
 	obj.AddMember(gsr{"joined"}, std::chrono::duration_cast<std::chrono::seconds>(joined.time_since_epoch()).count(), d.GetAllocator());
@@ -75,7 +76,7 @@ int insertIntoUsers(std::string body) {
     mafsrv::PublicUsers users;
     auto db = getDB();
     auto res = db(insert_into(users)
-		  .set(users.name = name,
+		  .set(users.username = name,
 		       users.gamesPlayed = 0,
 		       users.gamesWon = 0,
 		       users.joined = std::chrono::system_clock::now()));
@@ -96,7 +97,7 @@ int updateIntoUsers(int uid, std::string body) {
 	if (m.name == "uid") {
 	    continue;
 	} else if (m.name == "name") {
-	    s.assignments.add(users.name = m.value.GetString());
+	    s.assignments.add(users.username = m.value.GetString());
 	} else if (m.name == "joined") {
 	    s.assignments.add(users.joined = std::chrono::time_point<std::chrono::system_clock>(std::chrono::seconds(m.value.GetInt())));
 	} else if (m.name == "games played") {
@@ -113,32 +114,64 @@ int updateIntoUsers(int uid, std::string body) {
     return 0;
 }
 
-int tryLogin(std::string body) {
-    /*
+std::string sha256(const std::string &str)
+{
+    unsigned char hash[SHA256_DIGEST_LENGTH];
+    SHA256_CTX sha256;
+    SHA256_Init(&sha256);
+    SHA256_Update(&sha256, str.c_str(), str.size());
+    SHA256_Final(hash, &sha256);
+    std::stringstream ss;
+    for(int i = 0; i < SHA256_DIGEST_LENGTH; i++)
+    {
+        ss << std::hex << std::setw(2) << std::setfill('0') << (int)hash[i];
+    }
+    return ss.str();
+}
+
+std::string tryLogin(std::string body) {
+    mafsrv::PublicUsers users;
     rapidjson::Document dom;
     dom.Parse(body.c_str());
 
-    std::string name, email;
-    rapidjson::Value::ConstMemberIterator it = dom.FindMember("name");
+    std::string usernameAttempt, passwordAttempt;
+    rapidjson::Value::ConstMemberIterator it = dom.FindMember("username");
     if (it != dom.MemberEnd())
-	name = it->value.GetString();
+	usernameAttempt = it->value.GetString();
     else
 	throw std::invalid_argument("malformed request");
-    it = dom.FindMember("email");
+    it = dom.FindMember("password");
     if (it != dom.MemberEnd())
-	email = it->value.GetString();
+	passwordAttempt = it->value.GetString();
     else
 	throw std::invalid_argument("malformed request");
 
-    mafsrv::PublicUsers users;
     auto db = getDB();
-    auto res = db(insert_into(users)
-		  .set(users.name = name,
-		       users.gamesPlayed = 0,
-		       users.gamesWon = 0,
-		       users.joined = std::chrono::system_clock::now()));
+    auto res = db(select(users.password, users.passwordSalt)
+		  .from(users)
+		  .where(users.username == usernameAttempt));
+    if (!res.empty()) {
+	std::string passwordSalt = res.front().passwordSalt;
+	std::string saltedPassword = res.front().password;
+	std::string saltedAttempt = sha256(passwordAttempt + passwordSalt);
+	std::cout << saltedAttempt << std::endl;
+	bool passwordMatches = saltedAttempt == saltedPassword;
+	if (!passwordMatches)
+	    throw std::runtime_error("login failed");
 
-    return 0;
-    */
-    return 0;
+	jwtpp::claims cl;
+	cl.set().iss("jtl mafia");
+	cl.set().sub(usernameAttempt);
+	const auto now = std::chrono::system_clock::now();
+	const Json::Int twentyOneDays = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count() + 1814400;
+	cl.set().any("exp", twentyOneDays);
+
+	jwtpp::sp_crypto h512 = std::make_shared<jwtpp::hmac>("secret", jwtpp::alg_t::HS512);
+
+	std::string bearer = jwtpp::jws::sign_bearer(cl, h512);
+	std::cout << bearer << std::endl;
+	return bearer;
+    }
+
+    return ""; // should never get here
 }

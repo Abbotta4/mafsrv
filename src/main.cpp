@@ -4,7 +4,7 @@
 #include <restserver.h>
 
 int main(int argc, char* argv[]) {
-    Pistache::Port port(9080);
+    Pistache::Port port(9081);
     int thr = 2;
     if (argc >= 2)
     {
