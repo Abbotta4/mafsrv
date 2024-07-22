@@ -98,11 +98,11 @@ void RESTEndpoint::getThread(Pistache::Rest::Request const& request, Pistache::H
 void RESTEndpoint::login(Pistache::Rest::Request const& request, Pistache::Http::ResponseWriter response) {
     std::cout << "received login" << std::endl;
     try {
-	std::string status = tryLogin(request.body());
-	if (status != "") // UPDATE_OK
-	    response.send(Pistache::Http::Code::Ok, status , MIME(Text, Plain));
-	else // error code
-	    response.send(Pistache::Http::Code::Bad_Request, "Could not log in: " + status , MIME(Text, Plain));
+        std::string status = tryLogin(request.body());
+        if (status != "") // UPDATE_OK
+            response.send(Pistache::Http::Code::Ok, status , MIME(Text, Plain));
+        else // error code
+	        response.send(Pistache::Http::Code::Unauthorized, status , MIME(Text, Plain));
     } catch (const std::runtime_error &bang) {
 	response.send(Pistache::Http::Code::Not_Found, bang.what(), MIME(Text, Plain));
     } catch (...) {

@@ -151,26 +151,46 @@ std::string tryLogin(std::string body) {
 		  .from(users)
 		  .where(users.username == usernameAttempt));
     if (!res.empty()) {
-	std::string passwordSalt = res.front().passwordSalt;
-	std::string saltedPassword = res.front().password;
-	std::string saltedAttempt = sha256(passwordAttempt + passwordSalt);
-	std::cout << saltedAttempt << std::endl;
-	bool passwordMatches = saltedAttempt == saltedPassword;
-	if (!passwordMatches)
-	    throw std::runtime_error("login failed");
+        std::string passwordSalt = res.front().passwordSalt;
+        std::string saltedPassword = res.front().password;
+        std::string saltedAttempt = sha256(passwordAttempt + passwordSalt);
+        std::cout << saltedAttempt << std::endl;
+        bool passwordMatches = saltedAttempt == saltedPassword;
+        if (!passwordMatches) {
+            rapidjson::Document d;
+            rapidjson::Value &obj = d.SetObject();
+            using gsr = rapidjson::GenericStringRef<char>;
+            obj.AddMember(gsr{"status"}, gsr{"login failed"}, d.GetAllocator());
+            rapidjson::StringBuffer buffer;
+            rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+            d.Accept(writer);
+            throw std::runtime_error(buffer.GetString());
+        }
 
-	jwtpp::claims cl;
-	cl.set().iss("jtl mafia");
-	cl.set().sub(usernameAttempt);
-	const auto now = std::chrono::system_clock::now();
-	const Json::Int twentyOneDays = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count() + 1814400;
-	cl.set().any("exp", twentyOneDays);
+	    jwtpp::claims cl;
+	    cl.set().iss("jtl mafia");
+	    cl.set().sub(usernameAttempt);
+	    const auto now = std::chrono::system_clock::now();
+	    const Json::Int twentyOneDays = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count() + 1814400;
+	    cl.set().any("exp", twentyOneDays);
 
-	jwtpp::sp_crypto h512 = std::make_shared<jwtpp::hmac>("secret", jwtpp::alg_t::HS512);
+	    jwtpp::sp_crypto h512 = std::make_shared<jwtpp::hmac>("secret", jwtpp::alg_t::HS512);
 
-	std::string bearer = jwtpp::jws::sign_bearer(cl, h512);
-	std::cout << bearer << std::endl;
-	return bearer;
+	    std::string bearer = jwtpp::jws::sign_bearer(cl, h512);
+	    std::cout << bearer << std::endl;
+
+	    rapidjson::Document d;
+	    rapidjson::Value &obj = d.SetObject();
+
+	    using gsr = rapidjson::GenericStringRef<char>;
+
+	    obj.AddMember(gsr{"status"}, gsr{"ok"}, d.GetAllocator());
+	    obj.AddMember(gsr{"jwt"}, gsr{bearer.c_str()}, d.GetAllocator());
+
+	    rapidjson::StringBuffer buffer;
+	    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+	    d.Accept(writer);
+	    return buffer.GetString();
     }
 
     return ""; // should never get here
