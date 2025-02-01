@@ -4,6 +4,11 @@
 
 sqlpp::postgresql::connection getDB();
 std::string selectFromUsers(int uid);
+int insertIntoThreads(std::string body);
+std::string selectAllThreads();
+std::string selectFromThreads(int tid);
+int updateIntoThreads(int tid, std::string body);
+int deleteFromThreads(int tid);
 int insertIntoUsers(std::string body);
 int updateIntoUsers(int uid, std::string body);
 int deleteFromUsers(int uid);

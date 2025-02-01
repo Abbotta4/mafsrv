@@ -114,6 +114,114 @@ int updateIntoUsers(int uid, std::string body) {
     return 0;
 }
 
+int insertIntoThreads(std::string body) {
+    rapidjson::Document dom;
+    dom.Parse(body.c_str());
+
+    std::string name;
+    rapidjson::Value::ConstMemberIterator it = dom.FindMember("name");
+    if (it != dom.MemberEnd())
+        name = it->value.GetString();
+    else
+        throw std::invalid_argument("malformed request");
+
+    std::cout << "got past find name" << std::endl;
+    mafsrv::PublicThreads threads;
+    auto db = getDB();
+    auto res = db(insert_into(threads)
+                 .set(threads.name = name));
+    std::cout << "got past db" << std::endl;
+    return 0;
+}
+
+std::string selectAllThreads() {
+    mafsrv::PublicThreads threads;
+    auto db = getDB();
+    auto res = db(select(all_of(threads))
+                 .from(threads)
+                 .unconditionally());
+    if (!res.empty()) {
+        rapidjson::Document d;
+        rapidjson::Value &obj = d.SetObject();
+
+        using gsr = rapidjson::GenericStringRef<char>;
+
+        // fix this ugly garbage
+        for (const auto& row : res) {
+            std::string name = row.name;
+            uint64_t tid = row.tid;
+            std::string stid = std::to_string(tid);
+            rapidjson::Value vname, vtid;
+            vname.SetString(name.c_str(), name.size(), d.GetAllocator());
+            vtid.SetString(stid.c_str(), stid.size(), d.GetAllocator());
+            obj.AddMember(vtid, vname, d.GetAllocator());
+        }
+        rapidjson::StringBuffer buffer;
+        rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+        d.Accept(writer);
+        return buffer.GetString();
+    }
+
+    return "";
+}
+
+std::string selectFromThreads(int tid) {
+    mafsrv::PublicThreads threads;
+    auto db = getDB();
+    auto res = db(select(all_of(threads))
+                 .from(threads)
+                 .where(threads.tid == tid));
+    if (!res.empty()) {
+        rapidjson::Document d;
+        rapidjson::Value &obj = d.SetObject();
+
+        using gsr = rapidjson::GenericStringRef<char>;
+
+        std::string name = res.front().name;
+        obj.AddMember(gsr{"name"}, gsr{name.c_str()}, d.GetAllocator());
+
+        rapidjson::StringBuffer buffer;
+        rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+        d.Accept(writer);
+        return buffer.GetString();
+    }
+
+    return "";
+}
+
+int updateIntoThreads(int tid, std::string body) {
+    rapidjson::Document dom;
+    dom.Parse(body.c_str());
+
+    mafsrv::PublicThreads threads;
+
+    auto db = getDB();
+    auto s = dynamic_update(db, threads).dynamic_set().dynamic_where(threads.tid == tid);
+
+    for (auto& m : dom.GetObject()) {
+        if (m.name == "tid") {
+            continue;
+        } else if (m.name == "name") {
+            s.assignments.add(threads.name = m.value.GetString());
+        } else {
+            throw std::runtime_error("Invalid threads key");
+        }
+    }
+
+    auto res = db(s);
+
+    return 0;
+}
+
+int deleteFromThreads(int tid) {
+    mafsrv::PublicThreads threads;
+    auto db = getDB();
+    auto res = db(remove_from(threads)
+                 .where(threads.tid == tid));
+
+    return 0; // DELETE_OK
+}
+
 std::string sha256(const std::string &str)
 {
     unsigned char hash[SHA256_DIGEST_LENGTH];
@@ -133,6 +241,7 @@ std::string tryLogin(std::string body) {
     rapidjson::Document dom;
     dom.Parse(body.c_str());
 
+    // parse request body
     std::string usernameAttempt, passwordAttempt;
     rapidjson::Value::ConstMemberIterator it = dom.FindMember("username");
     if (it != dom.MemberEnd())
@@ -145,10 +254,13 @@ std::string tryLogin(std::string body) {
     else
         throw std::invalid_argument("malformed request");
 
+    // request hashed password and salt from db
     auto db = getDB();
     auto res = db(select(users.password, users.passwordSalt)
                  .from(users)
                  .where(users.username == usernameAttempt));
+
+    // valid username
     if (!res.empty()) {
         std::string passwordSalt = res.front().passwordSalt;
         std::string saltedPassword = res.front().password;
@@ -166,6 +278,7 @@ std::string tryLogin(std::string body) {
             throw std::runtime_error(buffer.GetString());
         }
 
+        // fill out jwt "claims" (headers?): https://auth0.com/docs/secure/tokens/json-web-tokens/json-web-token-claims
         jwtpp::claims cl;
         cl.set().iss("jtl mafia");
         cl.set().sub(usernameAttempt);
@@ -175,8 +288,16 @@ std::string tryLogin(std::string body) {
 
         jwtpp::sp_crypto h512 = std::make_shared<jwtpp::hmac>("secret", jwtpp::alg_t::HS512);
 
+        // sign and finish jwt
         std::string bearer = jwtpp::jws::sign_bearer(cl, h512);
         std::cout << bearer << std::endl;
+
+        // store bearer in db
+        mafsrv::PublicJwt jwt;
+        auto res = db(insert_into(jwt)
+                 .set(jwt.token = bearer,
+                      jwt.authedUsername = usernameAttempt,
+                      jwt.expiration = twentyOneDays));
 
         rapidjson::Document d;
         rapidjson::Value &obj = d.SetObject();

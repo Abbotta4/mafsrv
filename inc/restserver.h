@@ -16,7 +16,11 @@ private:
     void createUser(Pistache::Rest::Request const& request, Pistache::Http::ResponseWriter response);
     void updateUser(Pistache::Rest::Request const& request, Pistache::Http::ResponseWriter response);
     void deleteUser(Pistache::Rest::Request const& request, Pistache::Http::ResponseWriter response);
-    void getThread(Pistache::Rest::Request const& request, Pistache::Http::ResponseWriter response);
+    void createThread(Pistache::Rest::Request const& request, Pistache::Http::ResponseWriter response);
+    void readThread(Pistache::Rest::Request const& request, Pistache::Http::ResponseWriter response);
+    void readAllThreads(Pistache::Rest::Request const& request, Pistache::Http::ResponseWriter response);
+    void updateThread(Pistache::Rest::Request const& request, Pistache::Http::ResponseWriter response);
+    void deleteThread(Pistache::Rest::Request const& request, Pistache::Http::ResponseWriter response);
     void login(Pistache::Rest::Request const& request, Pistache::Http::ResponseWriter response);
     //void doAuth(Pistache::Rest::Request const& request, Pistache::Http::ResponseWriter response);
 
