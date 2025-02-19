@@ -1,6 +1,6 @@
 #include <iostream>
 #include <pgdb.h>
-#include <users.h>
+#include <sqlpp11_tables.h>
 #include <restserver.h>
 
 int main(int argc, char* argv[]) {

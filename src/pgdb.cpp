@@ -1,3 +1,4 @@
+#include <chrono>
 #include <sqlpp11/postgresql/connection.h>
 #include <sqlpp11/select.h>
 #include <sqlpp11/remove.h>
@@ -7,7 +8,7 @@
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
 #include <jwtpp/jwtpp.hh>
-#include <users.h>
+#include <sqlpp11_tables.h>
 #include <pgdb.h>
 
 sqlpp::postgresql::connection getDB() {
@@ -291,13 +292,6 @@ std::string tryLogin(std::string body) {
         // sign and finish jwt
         std::string bearer = jwtpp::jws::sign_bearer(cl, h512);
         std::cout << bearer << std::endl;
-
-        // store bearer in db
-        mafsrv::PublicJwt jwt;
-        auto res = db(insert_into(jwt)
-                 .set(jwt.token = bearer,
-                      jwt.authedUsername = usernameAttempt,
-                      jwt.expiration = twentyOneDays));
 
         rapidjson::Document d;
         rapidjson::Value &obj = d.SetObject();

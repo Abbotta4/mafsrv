@@ -1,3 +1,4 @@
+#include "pistache/http_header.h"
 #include <pistache/endpoint.h>
 #include <pistache/http.h>
 #include <pistache/router.h>
@@ -37,6 +38,8 @@ void RESTEndpoint::readUser(Pistache::Rest::Request const& request, Pistache::Ht
     std::cout << "received readUser" << std::endl;
     try {
         auto uid = request.param(":uid").as<std::string>();
+        auto headers = request.headers();
+        auto authHeader = headers.tryGet<Pistache::Http::Header::Authorization>();
         std::string user = selectFromUsers(std::stoi(uid));
         if (user == "")
             throw std::runtime_error("User not found");
